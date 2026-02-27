@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Æsthetic — Random Color & Font Generator</title>
   <meta name="description" content="Generate cohesive color palettes and font pairings for your next project." />
+  <link rel="icon" type="image/png" href="favicon.png" />
 
   <!-- UI Shell fonts: DM Sans + Instrument Serif (distinctive, not generic) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -123,41 +124,70 @@
       text-transform: uppercase;
     }
 
-    main {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 48px);
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
+    #main {
+      /* No overflow clipping — let content determine height */
     }
 
-    .top-row {
+    /* Two-column layout ────────────────────────────────────
+       Desktop: side-by-side columns, each as tall as its own
+       content. Page scrolls naturally — nothing is ever clipped.
+       Mobile: single column, stacked.
+    ───────────────────────────────────────────────────────── */
+    .layout-columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 24px;
+      align-items: start; /* each column only as tall as its content */
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
+    .col {
+      padding: 28px clamp(14px, 2.5vw, 36px) 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .col-left {
+      border-right: 1px solid var(--ui-border);
+      /* Sticky so the left column stays in view while scrolling past long right content */
+      position: sticky;
+      top: 0;
+      /* Allow left column to scroll internally if it's taller than the viewport */
+      max-height: 100vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--ui-border) transparent;
+    }
+
+    .col-left::-webkit-scrollbar { width: 5px; }
+    .col-left::-webkit-scrollbar-track { background: transparent; }
+    .col-left::-webkit-scrollbar-thumb { background: var(--ui-border); border-radius: 3px; }
+
     @media (max-width: 768px) {
-      .top-row { grid-template-columns: 1fr; }
+      .layout-columns {
+        grid-template-columns: 1fr;
+      }
+      .col {
+        padding: 20px clamp(14px, 4vw, 24px);
+        gap: 16px;
+      }
+      .col-left {
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+        border-right: none;
+        border-bottom: 1px solid var(--ui-border);
+        padding-bottom: 24px;
+      }
     }
 
     .site-footer {
       border-top: 1px solid var(--ui-border);
-      padding: 24px clamp(16px, 4vw, 48px);
+      padding: 16px clamp(16px, 4vw, 48px);
       text-align: center;
       font-size: .8125rem;
       color: var(--ui-text-muted);
-    }
-
-    .site-footer kbd {
-      display: inline-block;
-      background: var(--ui-surface-2);
-      border: 1px solid var(--ui-border);
-      border-radius: 3px;
-      padding: 1px 5px;
-      font-family: var(--font-ui-body);
-      font-size: .75rem;
     }
 
     /* ====================================================
@@ -279,31 +309,73 @@
     }
 
     /* ====================================================
-       THEME TOGGLE
+       THEME TOGGLE SWITCH
        ==================================================== */
-    .theme-toggle {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: transparent;
-      border: 1px solid var(--ui-border);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      color: var(--ui-text-muted);
-      transition: all var(--transition);
-      font-size: 1.125rem;
+    .theme-switch-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       flex-shrink: 0;
     }
 
-    .theme-toggle:hover {
-      background: var(--ui-surface-2);
-      color: var(--ui-text);
+    .theme-switch-label {
+      font-size: .9rem;
+      line-height: 1;
+      user-select: none;
     }
 
-    .theme-toggle:focus-visible {
+    /* The hidden checkbox drives the toggle state */
+    .theme-switch-wrap input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    /* The visible pill track */
+    .theme-switch-track {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      border-radius: 11px;
+      background: var(--ui-border);
+      cursor: pointer;
+      transition: background var(--transition);
+      flex-shrink: 0;
+      border: 1.5px solid var(--ui-text-muted);
+    }
+
+    /* The sliding thumb */
+    .theme-switch-track::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--ui-text-muted);
+      transition: transform var(--transition), background var(--transition);
+    }
+
+    /* Checked = dark mode: slide thumb right, fill track */
+    .theme-switch-wrap input:checked + .theme-switch-track {
+      background: var(--ui-accent);
+      border-color: var(--ui-accent);
+    }
+
+    .theme-switch-wrap input:checked + .theme-switch-track::after {
+      transform: translateX(18px);
+      background: var(--ui-accent-fg);
+    }
+
+    .theme-switch-wrap input:focus-visible + .theme-switch-track {
       outline: 2px solid var(--ui-focus);
       outline-offset: 2px;
+    }
+
+    .theme-switch-track:hover {
+      border-color: var(--ui-text);
     }
 
     /* ====================================================
@@ -654,6 +726,354 @@
     .tab-panel.active { display: block; }
 
     /* ====================================================
+       KEYBOARD SHORTCUTS BAR
+       ==================================================== */
+    .shortcuts-bar {
+      background: var(--ui-surface-2);
+      border-bottom: 1px solid var(--ui-border);
+      padding: 0 clamp(16px, 4vw, 48px);
+      transition: background var(--transition);
+    }
+
+    .shortcuts-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .shortcuts-inner::-webkit-scrollbar { display: none; }
+
+    .shortcut-label {
+      font-size: .72rem;
+      color: var(--ui-text-muted);
+      letter-spacing: .02em;
+      white-space: nowrap;
+      margin-right: 4px;
+      font-weight: 500;
+    }
+
+    .shortcut-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: .72rem;
+      color: var(--ui-text-muted);
+      white-space: nowrap;
+      padding: 0 8px;
+      border-right: 1px solid var(--ui-border);
+    }
+
+    .shortcut-item:last-child { border-right: none; }
+
+    .shortcut-item kbd {
+      display: inline-block;
+      background: var(--ui-surface);
+      border: 1px solid var(--ui-border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: var(--font-ui-body);
+      font-size: .68rem;
+      font-weight: 600;
+      color: var(--ui-text);
+      box-shadow: 0 1px 0 rgba(0,0,0,.08);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 640px) {
+      .shortcuts-bar { display: none; }
+    }
+
+    /* ====================================================
+       COLOR INFLUENCE CONTROLS
+       ==================================================== */
+    .color-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 560px) {
+      .color-controls { grid-template-columns: 1fr; }
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--ui-text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-group label span {
+      font-weight: 400;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--ui-text);
+      font-size: .8rem;
+    }
+
+    /* Color picker with custom wrapper */
+    .color-picker-wrap {
+      position: relative;
+      width: 100%;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--ui-border);
+      overflow: hidden;
+      cursor: pointer;
+      background: var(--ui-surface-2);
+      display: flex;
+      align-items: center;
+      transition: border-color var(--transition);
+    }
+
+    .color-picker-wrap:hover, .color-picker-wrap:focus-within {
+      border-color: var(--ui-accent);
+    }
+
+    .color-picker-wrap input[type="color"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+
+    .color-picker-preview {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      margin-left: 5px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,.12);
+      pointer-events: none;
+    }
+
+    .color-picker-hex {
+      font-family: 'Courier New', monospace;
+      font-size: .8rem;
+      color: var(--ui-text);
+      margin-left: 10px;
+      pointer-events: none;
+    }
+
+    /* Range (slider) input */
+    .range-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to right, var(--range-fill, var(--ui-accent)) 0%, var(--range-fill, var(--ui-accent)) var(--range-pct, 50%), var(--ui-border) var(--range-pct, 50%), var(--ui-border) 100%);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--ui-accent);
+      border: 2px solid var(--ui-surface);
+      box-shadow: 0 0 0 1px var(--ui-border), var(--ui-shadow);
+      cursor: pointer;
+      transition: transform var(--transition);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    input[type="range"]:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 4px; border-radius: 2px; }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--ui-accent);
+      border: 2px solid var(--ui-surface);
+      box-shadow: 0 0 0 1px var(--ui-border);
+      cursor: pointer;
+    }
+
+    .range-hint { font-size: .7rem; color: var(--ui-text-muted); white-space: nowrap; }
+
+    /* Custom checkbox */
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .75rem;
+      color: var(--ui-text-muted);
+      cursor: pointer;
+      user-select: none;
+      margin-top: 6px;
+      white-space: nowrap;   /* never wraps onto a second line */
+      width: fit-content;    /* left-aligned, doesn't stretch */
+    }
+
+    .checkbox-label:hover { color: var(--ui-text); }
+
+    .checkbox-label input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .checkbox-box {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      border-radius: 4px;
+      /* Stronger border so the box is always visible against any surface */
+      border: 1.5px solid var(--ui-text-muted);
+      background: var(--ui-surface);
+      transition: all var(--transition);
+      display: grid;
+      place-items: center;
+    }
+
+    .checkbox-label:hover .checkbox-box {
+      border-color: var(--ui-text);
+    }
+
+    .checkbox-box::after {
+      content: '';
+      width: 8px;
+      height: 5px;
+      border-left: 2px solid var(--ui-accent-fg);
+      border-bottom: 2px solid var(--ui-accent-fg);
+      transform: rotate(-45deg) translateY(-1px);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .checkbox-label input:checked ~ .checkbox-box {
+      background: var(--ui-accent);
+      border-color: var(--ui-accent);
+    }
+
+    .checkbox-label input:checked ~ .checkbox-box::after { opacity: 1; }
+
+    .checkbox-label input:focus-visible ~ .checkbox-box {
+      outline: 2px solid var(--ui-focus);
+      outline-offset: 2px;
+    }
+
+    /* Dim the color picker when lock-to-swatch is active */
+    .color-picker-wrap.is-locked {
+      opacity: .45;
+      pointer-events: none;
+    }
+
+    /* ====================================================
+       PALETTE IN-CONTEXT PREVIEW
+       ==================================================== */
+    .palette-preview-inner {
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: var(--ui-shadow);
+      border: 1px solid rgba(0,0,0,.08);
+      animation: fadeIn 300ms ease both;
+    }
+
+    .pp-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      gap: 10px;
+    }
+
+    .pp-nav-logo { font-weight: 700; font-size: .875rem; letter-spacing: -.01em; }
+
+    .pp-nav-links { display: flex; gap: 14px; font-size: .75rem; opacity: .75; }
+
+    .pp-nav-cta {
+      font-size: .7rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    .pp-hero { padding: 24px 20px; }
+
+    .pp-hero-tag {
+      display: inline-block;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .pp-hero-h1 { font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+    .pp-hero-sub { font-size: .8rem; line-height: 1.6; opacity: .75; margin-bottom: 16px; }
+
+    .pp-hero-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .pp-btn-primary, .pp-btn-secondary {
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 5px;
+      cursor: default;
+      border: none;
+    }
+
+    .pp-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; }
+
+    .pp-card { padding: 14px 16px; }
+
+    .pp-card-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      margin-bottom: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: .875rem;
+    }
+
+    .pp-card-title { font-size: .8rem; font-weight: 700; margin-bottom: 3px; }
+    .pp-card-text  { font-size: .72rem; line-height: 1.45; opacity: .7; }
+
+    .pp-footer {
+      padding: 10px 16px;
+      font-size: .7rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ====================================================
        RESPONSIVE
        ==================================================== */
     @media (max-width: 480px) {
@@ -661,6 +1081,8 @@
       .controls-bar .btn { justify-content: center; }
       #palette-container { grid-template-columns: repeat(3, 1fr); }
       .swatch-color { height: 70px; }
+      .pp-nav-links { display: none; }
+      .pp-cards { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 320px) {
@@ -676,140 +1098,212 @@
       <a href="#" class="site-title" aria-label="Æsthetic home">
         Æsthetic <span>Generator</span>
       </a>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
-        🌙
-      </button>
+      <label class="theme-switch-wrap" title="Toggle dark/light mode">
+        <span class="theme-switch-label" aria-hidden="true">☀️</span>
+        <input type="checkbox" id="theme-toggle" role="switch" aria-label="Toggle dark mode" aria-checked="false" />
+        <span class="theme-switch-track"></span>
+        <span class="theme-switch-label" aria-hidden="true">🌙</span>
+      </label>
     </div>
   </header>
 
-  <main id="main" role="main">
-
-    <!-- CONTROLS -->
-    <section aria-label="Controls" class="card">
-      <div class="card-body">
-        <div class="controls-bar" role="toolbar" aria-label="Generator controls">
-          <button class="btn btn-primary" id="btn-shuffle" aria-label="Shuffle palette and fonts (Space)">
-            ⇄ Shuffle
-          </button>
-          <button class="btn btn-secondary" id="btn-save" aria-label="Save current combination (S)">
-            ♡ Save
-          </button>
-          <button class="btn btn-secondary" id="btn-copy-css" aria-label="Copy CSS variables (C)">
-            {} Copy CSS
-          </button>
-          <button class="btn btn-secondary" id="btn-export-json" aria-label="Export as JSON">
-            ↓ JSON
-          </button>
-          <div style="margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <span style="font-size:.8125rem; color:var(--ui-text-muted);">Presets:</span>
-            <button class="btn btn-ghost btn-sm" data-preset="minimal">Minimal</button>
-            <button class="btn btn-ghost btn-sm" data-preset="playful">Playful</button>
-            <button class="btn btn-ghost btn-sm" data-preset="bold">Bold</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PALETTE + FONT CARDS -->
-    <div class="top-row">
-
-      <!-- PALETTE CARD -->
-      <section class="card" aria-label="Color palette">
-        <div class="card-header">
-          <h2 class="card-title">Palette</h2>
-          <span id="palette-name" style="font-size:.8125rem;color:var(--ui-text-muted);"></span>
-        </div>
-        <div class="card-body">
-          <div id="palette-container" aria-live="polite" aria-label="Color swatches" role="list">
-            <!-- Swatches injected by JS -->
-          </div>
-          <p style="font-size:.75rem;color:var(--ui-text-muted);margin-top:12px;">
-            Click any swatch to copy its HEX value
-          </p>
-        </div>
-      </section>
-
-      <!-- FONT CARD -->
-      <section class="card" aria-label="Font pairing">
-        <div class="card-header">
-          <h2 class="card-title">Typography</h2>
-        </div>
-        <div class="card-body">
-          <div id="preview-area" aria-live="polite">
-            <p class="preview-heading" id="preview-h1">The quick brown fox</p>
-            <p class="preview-subhead" id="preview-sub">Jumps over the lazy dog</p>
-            <p class="preview-body" id="preview-para">
-              Beautiful typography is invisible — it carries the reader forward without
-              demanding attention. Great type sets a mood, establishes hierarchy, and builds trust.
-            </p>
-            <span class="preview-button" id="preview-btn" aria-hidden="true">Get Started →</span>
-          </div>
-          <div class="font-meta" id="font-meta">
-            <!-- Font chips injected by JS -->
-          </div>
-        </div>
-      </section>
-
+  <!-- KEYBOARD SHORTCUTS BAR (hidden on mobile) -->
+  <nav class="shortcuts-bar" aria-label="Keyboard shortcuts">
+    <div class="shortcuts-inner">
+      <span class="shortcut-label">Shortcuts:</span>
+      <span class="shortcut-item"><kbd>Space</kbd> Shuffle</span>
+      <span class="shortcut-item"><kbd>S</kbd> Save</span>
+      <span class="shortcut-item"><kbd>C</kbd> Copy CSS</span>
+      <span class="shortcut-item"><kbd>↑</kbd><kbd>↓</kbd> Adjust saturation</span>
+      <span class="shortcut-item">Click swatch to copy HEX</span>
     </div>
+  </nav>
 
-    <!-- EXPORT CARD -->
-    <section class="card" aria-label="Export options">
-      <div class="card-header">
-        <h2 class="card-title">Export</h2>
-        <div class="tabs" role="tablist">
-          <button class="tab-btn active" role="tab" data-tab="css" aria-selected="true">CSS</button>
-          <button class="tab-btn" role="tab" data-tab="json" aria-selected="false">JSON</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="tab-css" class="tab-panel active" role="tabpanel">
-          <p class="section-label">CSS Custom Properties</p>
-          <pre class="export-pre" id="css-output" aria-label="CSS variables output"></pre>
-          <div style="margin-top:12px;">
-            <button class="btn btn-secondary btn-sm" id="btn-copy-css2" aria-label="Copy CSS to clipboard">
-              Copy to clipboard
-            </button>
+  <main id="main" role="main">
+    <div class="layout-columns">
+
+      <!-- ════════════════════════════════════════
+           LEFT COLUMN: Controls · Palette · Favorites
+           ════════════════════════════════════════ -->
+      <div class="col col-left">
+
+        <!-- CONTROLS -->
+        <section aria-label="Controls" class="card">
+          <div class="card-body">
+            <div class="controls-bar" role="toolbar" aria-label="Generator controls">
+              <button class="btn btn-primary" id="btn-shuffle" aria-label="Shuffle palette and fonts (Space)">
+                ⇄ Shuffle
+              </button>
+              <button class="btn btn-secondary" id="btn-save" aria-label="Save current combination (S)">
+                ♡ Save
+              </button>
+              <button class="btn btn-secondary" id="btn-copy-css" aria-label="Copy CSS variables (C)">
+                {} Copy CSS
+              </button>
+              <button class="btn btn-secondary" id="btn-export-json" aria-label="Export as JSON">
+                ↓ JSON
+              </button>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--ui-border);">
+              <span style="font-size:.8125rem; color:var(--ui-text-muted);">Presets:</span>
+              <button class="btn btn-ghost btn-sm" data-preset="minimal">Minimal</button>
+              <button class="btn btn-ghost btn-sm" data-preset="playful">Playful</button>
+              <button class="btn btn-ghost btn-sm" data-preset="bold">Bold</button>
+            </div>
           </div>
-        </div>
-        <div id="tab-json" class="tab-panel" role="tabpanel">
-          <p class="section-label">JSON Object</p>
-          <pre class="export-pre" id="json-output" aria-label="JSON output"></pre>
-          <div style="margin-top:12px; display:flex; gap:10px;">
-            <button class="btn btn-secondary btn-sm" id="btn-copy-json" aria-label="Copy JSON to clipboard">
-              Copy to clipboard
-            </button>
-            <button class="btn btn-secondary btn-sm" id="btn-dl-json" aria-label="Download JSON file">
-              Download .json
-            </button>
+        </section>
+
+        <!-- PALETTE CARD -->
+        <section class="card" aria-label="Color palette">
+          <div class="card-header">
+            <h2 class="card-title">Palette</h2>
+            <span id="palette-name" style="font-size:.8125rem;color:var(--ui-text-muted);"></span>
           </div>
-        </div>
-      </div>
-    </section>
+          <div class="card-body">
 
-    <!-- FAVORITES CARD -->
-    <section class="card" aria-label="Saved favorites">
-      <div class="card-header">
-        <h2 class="card-title">Favorites</h2>
-        <span id="fav-count" style="font-size:.8125rem;color:var(--ui-text-muted);"></span>
-      </div>
-      <div class="card-body">
-        <div id="favorites-list" aria-live="polite" aria-label="Saved combinations">
-          <!-- Favorites injected by JS -->
-        </div>
-      </div>
-    </section>
+            <!-- COLOR INFLUENCE CONTROLS -->
+            <div class="color-controls" aria-label="Color influence controls">
+              <div class="control-group">
+                <label for="base-color-picker">
+                  Base Hue
+                  <span id="base-color-hex">#888888</span>
+                </label>
+                <div class="color-picker-wrap" title="Pick a base color to influence the palette">
+                  <input type="color" id="base-color-picker" aria-label="Base hue color picker" value="#888888" />
+                  <div class="color-picker-preview" id="picker-preview"></div>
+                  <span class="color-picker-hex" id="picker-hex-label">#888888</span>
+                </div>
+                <!-- Lock-to-swatch checkbox -->
+                <label class="checkbox-label" for="lock-to-swatch">
+                  <input type="checkbox" id="lock-to-swatch" />
+                  <span class="checkbox-box" aria-hidden="true"></span>
+                  Lock to first swatch
+                </label>
+              </div>
 
+              <div class="control-group">
+                <label for="saturation-slider">
+                  Saturation
+                  <span id="sat-value-label">50%</span>
+                </label>
+                <div class="range-wrap">
+                  <span class="range-hint">Muted</span>
+                  <input type="range" id="saturation-slider" min="5" max="95" value="50"
+                         aria-label="Palette saturation (5 to 95 percent)"
+                         aria-valuemin="5" aria-valuemax="95" aria-valuenow="50" />
+                  <span class="range-hint">Vivid</span>
+                </div>
+                <span style="font-size:.7rem;color:var(--ui-text-muted);">Use ↑↓ arrow keys when focused</span>
+              </div>
+            </div>
+
+            <!-- SWATCHES -->
+            <div id="palette-container" aria-live="polite" aria-label="Color swatches" role="list">
+              <!-- Swatches injected by JS -->
+            </div>
+            <p style="font-size:.75rem;color:var(--ui-text-muted);margin-top:12px;">
+              Click any swatch to copy its HEX value
+            </p>
+
+          </div>
+        </section>
+
+        <!-- FAVORITES CARD -->
+        <section class="card" aria-label="Saved favorites">
+          <div class="card-header">
+            <h2 class="card-title">Favorites</h2>
+            <span id="fav-count" style="font-size:.8125rem;color:var(--ui-text-muted);"></span>
+          </div>
+          <div class="card-body">
+            <div id="favorites-list" aria-live="polite" aria-label="Saved combinations">
+              <!-- Favorites injected by JS -->
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /col-left -->
+
+      <!-- ════════════════════════════════════════
+           RIGHT COLUMN: Typography · Color Preview · Export
+           ════════════════════════════════════════ -->
+      <div class="col col-right">
+
+        <!-- FONT CARD -->
+        <section class="card" aria-label="Font pairing">
+          <div class="card-header">
+            <h2 class="card-title">Typography</h2>
+          </div>
+          <div class="card-body">
+            <div id="preview-area" aria-live="polite">
+              <p class="preview-heading" id="preview-h1">The quick brown fox</p>
+              <p class="preview-subhead" id="preview-sub">Jumps over the lazy dog</p>
+              <p class="preview-body" id="preview-para">
+                Beautiful typography is invisible — it carries the reader forward without
+                demanding attention. Great type sets a mood, establishes hierarchy, and builds trust.
+              </p>
+              <span class="preview-button" id="preview-btn" aria-hidden="true">Get Started →</span>
+            </div>
+            <div class="font-meta" id="font-meta">
+              <!-- Font chips injected by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- PALETTE IN-CONTEXT PREVIEW -->
+        <section class="card" aria-label="Palette in context">
+          <div class="card-header">
+            <h2 class="card-title">Palette Preview</h2>
+            <span style="font-size:.8125rem;color:var(--ui-text-muted);">Colors in use</span>
+          </div>
+          <div class="card-body" style="padding:16px;">
+            <div class="palette-preview-inner" id="pp-root" aria-live="polite">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- EXPORT CARD -->
+        <section class="card" aria-label="Export options">
+          <div class="card-header">
+            <h2 class="card-title">Export</h2>
+            <div class="tabs" role="tablist">
+              <button class="tab-btn active" role="tab" data-tab="css" aria-selected="true">CSS</button>
+              <button class="tab-btn" role="tab" data-tab="json" aria-selected="false">JSON</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="tab-css" class="tab-panel active" role="tabpanel">
+              <p class="section-label">CSS Custom Properties</p>
+              <pre class="export-pre" id="css-output" aria-label="CSS variables output"></pre>
+              <div style="margin-top:12px;">
+                <button class="btn btn-secondary btn-sm" id="btn-copy-css2" aria-label="Copy CSS to clipboard">
+                  Copy to clipboard
+                </button>
+              </div>
+            </div>
+            <div id="tab-json" class="tab-panel" role="tabpanel">
+              <p class="section-label">JSON Object</p>
+              <pre class="export-pre" id="json-output" aria-label="JSON output"></pre>
+              <div style="margin-top:12px; display:flex; gap:10px;">
+                <button class="btn btn-secondary btn-sm" id="btn-copy-json" aria-label="Copy JSON to clipboard">
+                  Copy to clipboard
+                </button>
+                <button class="btn btn-secondary btn-sm" id="btn-dl-json" aria-label="Download JSON file">
+                  Download .json
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /col-right -->
+
+    </div><!-- /layout-columns -->
   </main>
 
   <!-- FOOTER -->
   <footer class="site-footer" role="contentinfo">
-    <p>
-      <kbd>Space</kbd> Shuffle &nbsp;·&nbsp;
-      <kbd>S</kbd> Save &nbsp;·&nbsp;
-      <kbd>C</kbd> Copy CSS &nbsp;·&nbsp;
-      Click any swatch to copy HEX &nbsp;·&nbsp;
-      MIT licensed
-    </p>
+    <p>Æsthetic Generator &nbsp;·&nbsp; MIT licensed &nbsp;·&nbsp; Keyboard shortcuts shown above</p>
   </footer>
 
   <!-- TOAST -->
@@ -1017,48 +1511,56 @@
       return `#${f(0)}${f(8)}${f(4)}`;
     }
 
-    /** Generate a random palette of 4–6 colors using a strategy */
-    function getRandomPalette() {
+    /** Generate a random palette of 4–6 colors using a strategy.
+     *  baseHue: optional fixed hue (0-360); null = random
+     *  satPct: saturation percentage (5-95); default 50
+     */
+    function getRandomPalette(baseHue = null, satPct = 50) {
       const strategy = PALETTE_STRATEGIES[Math.floor(Math.random() * PALETTE_STRATEGIES.length)];
-      const baseHue = Math.random() * 360;
-      const baseSat = 25 + Math.random() * 55;  // avoid greys and oversaturated
+      const h = baseHue !== null ? baseHue : Math.random() * 360;
+      // Map satPct (5-95) to a workable baseSat range (8-80)
+      const baseSat = 8 + (satPct / 100) * 72;
       const colors = [];
 
       if (strategy === 'monochromatic') {
         const lightnesses = [92, 78, 58, 38, 22, 10];
         const count = 4 + Math.floor(Math.random() * 3);
         for (let i = 0; i < count; i++) {
-          colors.push(hslToHex(baseHue, baseSat, lightnesses[i]));
+          colors.push(hslToHex(h, baseSat, lightnesses[i]));
         }
       } else if (strategy === 'analogous') {
         const spread = 20 + Math.random() * 20;
-        const hues = [baseHue - spread, baseHue, baseHue + spread, baseHue + spread * 2];
-        hues.forEach((h, i) => colors.push(hslToHex(h, baseSat, [75, 55, 40, 25][i])));
+        const hues = [h - spread, h, h + spread, h + spread * 2];
+        hues.forEach((hh, i) => colors.push(hslToHex(hh, baseSat, [75, 55, 40, 25][i])));
         // add a neutral
-        colors.push(hslToHex(baseHue, 8, 92));
-        colors.push(hslToHex(baseHue, 8, 12));
+        colors.push(hslToHex(h, Math.min(baseSat * 0.15, 8), 92));
+        colors.push(hslToHex(h, Math.min(baseSat * 0.15, 8), 12));
       } else if (strategy === 'split-complementary') {
-        const comp1 = baseHue + 150;
-        const comp2 = baseHue + 210;
-        colors.push(hslToHex(baseHue, baseSat, 65));
-        colors.push(hslToHex(baseHue, baseSat, 40));
-        colors.push(hslToHex(comp1, baseSat - 10, 60));
-        colors.push(hslToHex(comp2, baseSat - 10, 55));
-        colors.push(hslToHex(baseHue, 6, 96));
-        colors.push(hslToHex(baseHue, 6, 10));
+        const comp1 = h + 150;
+        const comp2 = h + 210;
+        colors.push(hslToHex(h, baseSat, 65));
+        colors.push(hslToHex(h, baseSat, 40));
+        colors.push(hslToHex(comp1, Math.max(baseSat - 10, 5), 60));
+        colors.push(hslToHex(comp2, Math.max(baseSat - 10, 5), 55));
+        colors.push(hslToHex(h, Math.min(baseSat * 0.1, 6), 96));
+        colors.push(hslToHex(h, Math.min(baseSat * 0.1, 6), 10));
       } else if (strategy === 'triadic') {
-        [baseHue, baseHue + 120, baseHue + 240].forEach((h, i) => {
-          colors.push(hslToHex(h, baseSat, [60, 45, 55][i]));
+        [h, h + 120, h + 240].forEach((hh, i) => {
+          colors.push(hslToHex(hh, baseSat, [60, 45, 55][i]));
         });
-        colors.push(hslToHex(baseHue, 5, 95));
-        colors.push(hslToHex(baseHue, 5, 15));
+        colors.push(hslToHex(h, Math.min(baseSat * 0.1, 5), 95));
+        colors.push(hslToHex(h, Math.min(baseSat * 0.1, 5), 15));
       } else { // tetradic
-        [baseHue, baseHue + 90, baseHue + 180, baseHue + 270].forEach((h, i) => {
-          colors.push(hslToHex(h, baseSat - i * 5, [65, 50, 60, 45][i]));
+        [h, h + 90, h + 180, h + 270].forEach((hh, i) => {
+          colors.push(hslToHex(hh, Math.max(baseSat - i * 5, 5), [65, 50, 60, 45][i]));
         });
-        colors.push(hslToHex(baseHue, 5, 95));
+        colors.push(hslToHex(h, Math.min(baseSat * 0.1, 5), 95));
       }
 
+      // Snapshot the HSL values so remapSaturation can later adjust only saturation.
+      currentPaletteHsl = colors.map(hex => hexToHsl(hex));
+      // Record the saturation level used at generation time (the baseline for remap).
+      colorInfluence._genSaturation = satPct;
       return { name: capitalize(strategy), colors };
     }
 
@@ -1107,6 +1609,9 @@
     function renderPalette(palette) {
       const container = document.getElementById('palette-container');
       document.getElementById('palette-name').textContent = palette.name;
+
+      // Sync color picker to reflect current palette
+      syncColorPickerToState(palette);
 
       // Fade out then rebuild
       container.style.opacity = '0';
@@ -1335,6 +1840,52 @@
     }
 
     /* ====================================================
+       COLOR INFLUENCE STATE
+       ==================================================== */
+    let colorInfluence = {
+      baseHue: null,       // null = random; 0-360 = locked hue
+      saturation: 50,      // 5-95 percent (slider value)
+      _genSaturation: 50,  // the saturation used when the palette was generated (baseline for remap)
+    };
+
+    // Stores [h, s, l] for each swatch at generation time.
+    // Used by remapSaturation to adjust only saturation without touching hues.
+    let currentPaletteHsl = [];
+
+    /** Convert HEX color to HSL components */
+    function hexToHsl(hex) {
+      const [r, g, b] = hexToRgb(hex);
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) { h = s = 0; }
+      else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch(max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+      return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+    }
+
+    /** Re-map only the saturation channel of the current palette.
+     *  Keeps every swatch's hue and lightness identical; only scales saturation.
+     *  satPct: new target (5-95). Returns a new palette object.
+     */
+    function remapSaturation(satPct) {
+      if (!currentPaletteHsl.length || !currentState.palette) return null;
+      const baseline = colorInfluence._genSaturation || 50;
+      const ratio = satPct / baseline;
+      const newColors = currentPaletteHsl.map(([h, origS, l]) => {
+        const newS = Math.max(0, Math.min(100, origS * ratio));
+        return hslToHex(h, newS, l);
+      });
+      return { ...currentState.palette, colors: newColors };
+    }
+
+    /* ====================================================
        APP STATE
        ==================================================== */
     let currentState = {
@@ -1345,16 +1896,199 @@
     /** Apply a full state object (palette + fonts) and re-render everything */
     function applyState(state) {
       currentState = state;
+      // Always keep currentPaletteHsl in sync so saturation remap works correctly
+      // even when a preset or favorite is applied (not generated via getRandomPalette).
+      currentPaletteHsl = state.palette.colors.map(hex => hexToHsl(hex));
+      if (!colorInfluence._genSaturation) colorInfluence._genSaturation = colorInfluence.saturation;
       renderPalette(state.palette);
       renderPreview(state.fonts);
+      renderPalettePreview(state.palette);
       renderExports(state);
     }
 
-    /** Shuffle: generate new random palette and font pair */
+    /** Shuffle: generate new random palette and font pair, respecting color influence */
     function shuffle() {
-      const palette = getRandomPalette();
+      // Reset the generation baseline to the current slider value before generating
+      colorInfluence._genSaturation = colorInfluence.saturation;
+      const palette = getRandomPalette(colorInfluence.baseHue, colorInfluence.saturation);
       const fonts = pickFontPair(currentState.fonts);
       applyState({ palette, fonts });
+    }
+
+    /* ====================================================
+       PRACTICAL PALETTE PREVIEW
+       Renders a mini UI mockup using the palette colors to
+       show how they work together in a real context.
+       ==================================================== */
+    function renderPalettePreview(palette) {
+      const c = palette.colors;
+      // Pick 4+ colors, fallback gracefully if palette is smaller
+      const bg0  = c[0] || '#f8f8f8';  // nav bg
+      const bg1  = c[1] || '#eeeeee';  // hero bg
+      const bg2  = c[2] || '#dddddd';  // cards bg
+      const bg3  = c[3] || '#cccccc';  // footer bg
+      const acc  = c[4] || c[3] || c[2]; // accent / CTA
+      const acc2 = c[5] || c[4] || c[0]; // secondary accent
+
+      // Decide text colors per-region based on contrast
+      const textFor = (bg) => {
+        const vsWhite = contrastRatio(bg, '#ffffff');
+        const vsBlack = contrastRatio(bg, '#000000');
+        return vsBlack > vsWhite ? '#111111' : '#f8f8f8';
+      };
+
+      const t0 = textFor(bg0);
+      const t1 = textFor(bg1);
+      const t2 = textFor(bg2);
+      const t3 = textFor(bg3);
+      const ta = textFor(acc);
+
+      const root = document.getElementById('pp-root');
+      root.innerHTML = `
+        <!-- Nav -->
+        <div class="pp-nav" style="background:${bg0};color:${t0};">
+          <div class="pp-nav-logo" style="color:${t0};">Brand</div>
+          <div class="pp-nav-links" style="color:${t0};">
+            <span>About</span><span>Work</span><span>Blog</span>
+          </div>
+          <div class="pp-nav-cta" style="background:${acc};color:${ta};">Contact</div>
+        </div>
+
+        <!-- Hero -->
+        <div class="pp-hero" style="background:${bg1};color:${t1};">
+          <div class="pp-hero-tag" style="background:${acc};color:${ta};">New Release</div>
+          <div class="pp-hero-h1" style="color:${t1};">Design with intention, ship with confidence</div>
+          <div class="pp-hero-sub" style="color:${t1};">A modern toolkit for teams who care about craft and want beautiful results fast.</div>
+          <div class="pp-hero-btns">
+            <div class="pp-btn-primary" style="background:${acc};color:${ta};">Get started free</div>
+            <div class="pp-btn-secondary" style="background:transparent;color:${t1};border:1.5px solid ${t1};opacity:.75;">See examples →</div>
+          </div>
+        </div>
+
+        <!-- Feature cards -->
+        <div class="pp-cards" style="background:${bg2};">
+          <div class="pp-card" style="background:${bg2};color:${t2};">
+            <div class="pp-card-icon" style="background:${acc};color:${ta};">✦</div>
+            <div class="pp-card-title" style="color:${t2};">Smart Layout</div>
+            <div class="pp-card-text" style="color:${t2};">Responsive grids that adapt to any screen with zero effort.</div>
+          </div>
+          <div class="pp-card" style="background:${bg2};color:${t2};border-left:1px solid rgba(128,128,128,.15);border-right:1px solid rgba(128,128,128,.15);">
+            <div class="pp-card-icon" style="background:${acc2};color:${textFor(acc2)};">◈</div>
+            <div class="pp-card-title" style="color:${t2};">Tokens & Vars</div>
+            <div class="pp-card-text" style="color:${t2};">Export CSS variables and design tokens in one click.</div>
+          </div>
+          <div class="pp-card" style="background:${bg2};color:${t2};">
+            <div class="pp-card-icon" style="background:${acc};color:${ta};">◎</div>
+            <div class="pp-card-title" style="color:${t2};">Accessibility</div>
+            <div class="pp-card-text" style="color:${t2};">WCAG AA contrast checked live as you build.</div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="pp-footer" style="background:${bg3};color:${t3};">
+          <span>© 2025 Brand Inc.</span>
+          <span style="opacity:.6;">Privacy · Terms · Cookies</span>
+        </div>
+      `;
+    }
+
+    /* ====================================================
+       COLOR CONTROLS WIRING
+       ==================================================== */
+    function initColorControls() {
+      const picker        = document.getElementById('base-color-picker');
+      const pickerWrap    = document.querySelector('.color-picker-wrap');
+      const pickerPreview = document.getElementById('picker-preview');
+      const pickerHexLabel= document.getElementById('picker-hex-label');
+      const baseColorHex  = document.getElementById('base-color-hex');
+      const satSlider     = document.getElementById('saturation-slider');
+      const satLabel      = document.getElementById('sat-value-label');
+      const lockCheckbox  = document.getElementById('lock-to-swatch');
+
+      function updateSliderFill(val) {
+        const pct = ((val - 5) / (95 - 5)) * 100;
+        satSlider.style.setProperty('--range-pct', `${pct}%`);
+      }
+
+      updateSliderFill(satSlider.value);
+
+      // Color picker: extract hue, re-generate palette
+      picker.addEventListener('input', () => {
+        const hex = picker.value;
+        pickerPreview.style.background = hex;
+        pickerHexLabel.textContent = hex.toUpperCase();
+        baseColorHex.textContent = hex.toUpperCase();
+        const [h] = hexToHsl(hex);
+        colorInfluence.baseHue = h;
+        const palette = getRandomPalette(colorInfluence.baseHue, colorInfluence.saturation);
+        applyState({ palette, fonts: currentState.fonts });
+      });
+
+      // Saturation slider: re-map saturation on the EXISTING palette (no new hues/strategy).
+      satSlider.addEventListener('input', () => {
+        const val = parseInt(satSlider.value);
+        colorInfluence.saturation = val;
+        satLabel.textContent = `${val}%`;
+        updateSliderFill(val);
+        satSlider.setAttribute('aria-valuenow', val);
+        const remapped = remapSaturation(val);
+        if (remapped) {
+          // Update currentState.palette directly and re-render without regenerating
+          currentState = { ...currentState, palette: remapped };
+          renderPalette(remapped);
+          renderPalettePreview(remapped);
+          renderExports(currentState);
+        }
+      });
+
+      // Lock-to-swatch checkbox:
+      // When checked, read the hue from the first swatch and set colorInfluence.baseHue.
+      // The current palette is NOT regenerated — it stays exactly as-is.
+      // The locked hue only takes effect on the next shuffle or saturation change.
+      lockCheckbox.addEventListener('change', () => {
+        const locked = lockCheckbox.checked;
+        pickerWrap.classList.toggle('is-locked', locked);
+
+        if (locked && currentState.palette?.colors?.length) {
+          const firstSwatch = currentState.palette.colors[0];
+          const [h] = hexToHsl(firstSwatch);
+          colorInfluence.baseHue = h;
+          applyPickerColor(firstSwatch);
+          // No palette regeneration — palette stays unchanged
+        }
+        // Unlocking: colorInfluence.baseHue stays at whatever it was; picker is freed.
+      });
+    }
+
+    /** Update just the picker UI elements (not influence state) */
+    function applyPickerColor(hex) {
+      const picker         = document.getElementById('base-color-picker');
+      const pickerPreview  = document.getElementById('picker-preview');
+      const pickerHexLabel = document.getElementById('picker-hex-label');
+      const baseColorHex   = document.getElementById('base-color-hex');
+      picker.value = hex;
+      pickerPreview.style.background = hex;
+      pickerHexLabel.textContent = hex.toUpperCase();
+      baseColorHex.textContent = hex.toUpperCase();
+    }
+
+    /** Sync the color picker UI to visually reflect the current palette.
+     *  IMPORTANT: this function only updates the visual picker display.
+     *  It never modifies colorInfluence.baseHue — that is only set by
+     *  explicit user actions (manual picker input or lock-to-swatch checkbox).
+     */
+    function syncColorPickerToState(palette) {
+      if (!palette.colors.length) return;
+      const lockCheckbox = document.getElementById('lock-to-swatch');
+      const locked = lockCheckbox?.checked;
+
+      // Show the first swatch when locked, otherwise a representative mid-palette color
+      const rep = locked
+        ? palette.colors[0]
+        : palette.colors[Math.min(2, palette.colors.length - 1)];
+
+      applyPickerColor(rep);
+      // colorInfluence.baseHue is intentionally NOT touched here
     }
 
     /* ====================================================
@@ -1385,7 +2119,12 @@
 
     function setTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
-      document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+      // Sync the switch checkbox state
+      const toggle = document.getElementById('theme-toggle');
+      if (toggle) {
+        toggle.checked = (theme === 'dark');
+        toggle.setAttribute('aria-checked', theme === 'dark');
+      }
       try {
         localStorage.setItem(LS_KEY_SETTINGS, JSON.stringify({ theme }));
       } catch {}
@@ -1401,7 +2140,21 @@
        ==================================================== */
     function initKeyboard() {
       document.addEventListener('keydown', e => {
-        // Don't fire when user is typing in an input
+        // Don't fire when user is typing in an input (except range sliders which we handle)
+        if (e.target.matches('input[type="text"], textarea, [contenteditable]')) return;
+
+        // Arrow Up/Down adjust saturation (but let the slider handle its own keys when focused)
+        if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && !e.target.matches('input[type="range"]')) {
+          e.preventDefault();
+          const slider = document.getElementById('saturation-slider');
+          const delta = e.key === 'ArrowUp' ? 5 : -5;
+          const newVal = Math.max(5, Math.min(95, parseInt(slider.value) + delta));
+          slider.value = newVal;
+          slider.dispatchEvent(new Event('input'));
+          return;
+        }
+
+        // Don't fire other shortcuts when focused on any input
         if (e.target.matches('input, textarea, [contenteditable]')) return;
 
         switch (e.key) {
@@ -1459,7 +2212,7 @@
         downloadJSON(exportJSON(currentState));
       });
 
-      document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+      document.getElementById('theme-toggle').addEventListener('change', toggleTheme);
 
       // Preset buttons
       document.querySelectorAll('[data-preset]').forEach(btn => {
@@ -1496,6 +2249,7 @@
       initTabs();
       initButtons();
       initKeyboard();
+      initColorControls();
       renderFavorites();
 
       // Start with the "Minimal" preset
